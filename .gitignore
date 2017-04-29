@@ -1,3 +1,5 @@
 *.txt
-.DS_Store
+*.p
+values
 client_secret.json
+.DS_Store

@@ -2,6 +2,7 @@ from __future__ import print_function
 import httplib2
 import os
 import base64
+import cPickle as pickle
 
 from apiclient import errors
 from apiclient import discovery
@@ -10,6 +11,8 @@ from oauth2client import tools
 from oauth2client.file import Storage
 from email.mime.text import MIMEText
 
+# Load all the emails saved from pickle.py
+emails = pickle.load(open( "emails.p", "rb" ))
 
 try:
     import argparse
@@ -19,6 +22,9 @@ except ImportError:
 
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/gmail-python-quickstart.json
+
+# We want the scope to be only able to create and send messages.
+# https://developers.google.com/gmail/api/auth/scopes
 SCOPES = 'https://www.googleapis.com/auth/gmail.compose'
 CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'Gmail API Python Quickstart'
@@ -96,40 +102,32 @@ def main():
     Creates a Gmail API service object and outputs a list of label names
     of the user's Gmail account.
     """
+    # Initializing the service http request service
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('gmail', 'v1', http=http)
     # name_email to list of sender-name_text
     # values = {'receiverName_receiverEmail':['senderName_senderMessage']}
-    values = {'Eric_hownl96@utexas.edu':['Jackson_You\'re a cool person','Laurel_Please eat more veggies']}
-    # sender
-    sender = 'hownl96@gmail.com'
-    for x in values:
+    values = pickle.load(open("values.p", "rb"))
+    # sender - Need to add your email here
+    sender = '<Input your Gmail Email Here>'
+    for graduate_name in values:
         # to
-        grad = x.split('_')
-        to = grad[1]
+        to = emails[graduate_name]
+        # For debugging purposes
         print(to)
-        for y in values[x]:
+        m = 'Dear '+ graduate_name + '!'
+        subject = 'Graduate Blessings from Empire for ' + graduate_name
+        for y in values[graduate_name]:
             sname_smsg = y.split('_')
             sname = sname_smsg[0]
             message_text = sname_smsg[1]
-            # subject
-            subject = 'Sample Blessings from ' + sname
             # text
-            # create the message
-            message = create_message(sender, to, subject, message_text)
-            # send message
-            sent_message = send_message(service, 'me', message) 
-
-    # results = service.users().labels().list(userId='me').execute()
-    # labels = results.get('labels', [])
-
-    # if not labels:
-    #     print('No labels found.')
-    # else:
-    #   print('Labels:')
-    #   for label in labels:
-    #     print(label['name'])
+            m += '\n\n' + message_text + '\n\t\t\t\t\t\tLove,\n\t\t\t\t\t\t' + sname + '\n'
+        # create the message
+        message = create_message(sender, to, subject, m)
+        # send message
+        sent_message = send_message(service, 'me', message) 
 
 
 if __name__ == '__main__':
